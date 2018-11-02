@@ -11,12 +11,22 @@ class App extends Component {
 
     this.state = {
       input,
+      disabled: ["oldSmooth"],
     };
   }
 
   changeInput (input) {
     this.setState({ input });
     localStorage.setItem(SAVED_INPUT, input);
+  }
+
+  onToggle (toggle, enable) {
+    if (enable) {
+      const newDisabled = this.state.disabled.filter(d => d !== toggle);
+      this.setState({ disabled: newDisabled });
+    } else {
+      this.setState({ disabled: [...this.state.disabled, toggle]});
+    }
   }
 
   render() {
@@ -26,22 +36,36 @@ class App extends Component {
     const bSpline = getBSpline(points);
     const reverse = getReverseBSpline(points);
     const smooth = getBSpline(reverse);
-    // const old = getBSpline(oldReverseBSpline(points));
+    const old = getBSpline(oldReverseBSpline(points));
+
+    const { disabled } = this.state;
+
+    const toggles = [ "points", "line", "bSpline", "smooth", "oldSmooth", "midPoints", "thirdPoints" ];
 
     return (
       <div className="App">
         <input value={this.state.input} onChange={e => this.changeInput(e.target.value)} />
+        <div>
+          {
+            toggles.map(toggle => (
+              <label>
+                <input type="checkbox" checked={!disabled.includes(toggle)} onChange={e => this.onToggle(toggle, e.target.checked)} />
+                {toggle}
+              </label>
+            ))
+          }
+        </div>
         <svg width={400} height={400}>
-          <path d={pointsToPolyline(points)} fillOpacity={0} stroke="black" />
-          <path d={controlPointsToBezier(bSpline)} fillOpacity={0} stroke="gray" />
-          <path d={controlPointsToBezier(smooth)} fillOpacity={0} stroke="blue" />
-          {/* <path d={controlPointsToBezier(old)} fillOpacity={0} stroke="cyan" /> */}
+          { disabled.includes("line") || <path d={pointsToPolyline(points)} fillOpacity={0} stroke="black" /> }
+          { disabled.includes("bSpline") || <path d={controlPointsToBezier(bSpline)} fillOpacity={0} stroke="gray" /> }
+          { disabled.includes("smooth") || <path d={controlPointsToBezier(smooth)} fillOpacity={0} stroke="blue" /> }
+          { disabled.includes("oldSmooth") || <path d={controlPointsToBezier(old)} fillOpacity={0} stroke="cyan" /> }
 
-          {midPoints.map(([x, y]) => <circle cx={x} cy={y} r={4} fill="purple" />)}
-          {thirdPoints.map(([x, y]) => <circle cx={x} cy={y} r={3} fill="green" />)}
+          { disabled.includes("midPoints") || midPoints.map(([x, y]) => <circle cx={x} cy={y} r={4} fill="purple" />)}
+          { disabled.includes("thirdPoints") || thirdPoints.map(([x, y]) => <circle cx={x} cy={y} r={3} fill="green" />)}
 
-          <circle cx={bSpline[0][0]} cy={bSpline[0][1]} r={3} fill="cyan" />
-          {bSpline.slice(1).map(([x1, y1, x2, y2, x, y]) => (
+          { disabled.includes("bSpline") || <circle cx={bSpline[0][0]} cy={bSpline[0][1]} r={3} fill="cyan" /> }
+          { disabled.includes("bSpline") || bSpline.slice(1).map(([x1, y1, x2, y2, x, y]) => (
           <>
             <circle cx={x1} cy={y1} r={2} fill="cyan" />
             <circle cx={x2} cy={y2} r={2} fill="cyan" />
@@ -49,10 +73,10 @@ class App extends Component {
           </>
           ))}
 
-          {smooth.map(([x, y]) => <circle cx={x} cy={y} r={4} fill="blue" />)}
-          {/* {old.map(([x, y]) => <circle cx={x} cy={y} r={4} fill="cyan" />)} */}
+          { disabled.includes("smooth") || smooth.map(([x, y]) => <circle cx={x} cy={y} r={4} fill="blue" />)}
+          { disabled.includes("oldSmooth") || old.map(([x, y]) => <circle cx={x} cy={y} r={4} fill="cyan" />)} }
 
-          {points.map(([x, y]) => <circle cx={x} cy={y} r={4} fill="red" />)}
+          { disabled.includes("points") || points.map(([x, y]) => <circle cx={x} cy={y} r={4} fill="red" />)}
         </svg>
       </div>
     );
